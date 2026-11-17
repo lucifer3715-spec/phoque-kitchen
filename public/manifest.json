@@ -1,0 +1,25 @@
+{
+  "name": "阿咩豹的小厨房 · 私房菜谱",
+  "short_name": "阿咩豹菜谱",
+  "description": "格陵兰海豹幼崽阿咩豹帮你们守护每一道暖心私房菜谱与备料清单",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FBF6EC",
+  "theme_color": "#568CB9",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

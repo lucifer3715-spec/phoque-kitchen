@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+  <title>阿咩豹的小厨房 · 私房菜谱</title>
+  <meta name="description" content="格陵兰海豹幼崽阿咩豹帮你们守护每一道暖心私房菜谱与备料清单" />
+  <meta name="theme-color" content="#5489B7" />
+
+  <!-- iPhone / iOS PWA & 灵动岛全屏适配 -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="阿咩豹菜谱" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <!-- 密码解锁页 -->
+  <main id="lock-screen" class="lock-screen hidden">
+    <div class="lock-sky-arch"></div>
+    <div class="lock-card">
+      <div id="lock-ameibao" class="lock-ameibao-wrap"></div>
+      <h1 class="lock-title">阿咩豹的小厨房</h1>
+      <p class="lock-subtitle">输入家庭小暗号，打开你们的私房菜谱与想吃清单</p>
+
+      <form id="login-form" class="login-form">
+        <div class="passcode-input-wrap">
+          <input
+            id="passcode-input"
+            type="password"
+            inputmode="text"
+            autocomplete="current-password"
+            placeholder="输入家庭密码..."
+            required
+          />
+          <button
+            type="button"
+            id="toggle-passcode-vis"
+            class="icon-ghost-btn"
+            aria-label="显示或隐藏密码"
+          >
+            👁️
+          </button>
+        </div>
+        <p id="login-error" class="form-error hidden"></p>
+        <button type="submit" id="login-submit-btn" class="btn btn-primary btn-lg btn-block">
+          解锁小厨房
+        </button>
+      </form>
+
+      <div id="env-warning" class="env-warning hidden"></div>
+      <p class="lock-hint">密码只用于连接你们的私有云端菜谱，外部人员无法看到任何照片和菜谱。</p>
+    </div>
+  </main>
+
+  <!-- 主界面 -->
+  <div id="app-shell" class="app-shell hidden">
+    <!-- 顶部冰海天窗 & iPhone 灵动岛适配区 -->
+    <header class="island-sky-header">
+      <div class="island-sky-inner">
+        <div class="header-top-row">
+          <div class="brand-cluster">
+            <span class="brand-name">阿咩豹小厨房</span>
+            <span id="feed-badge" class="feed-badge" title="阿咩豹被投喂次数">
+              <svg class="mini-seal-icon" viewBox="0 0 24 22" fill="none" aria-hidden="true">
+                <ellipse cx="12" cy="12" rx="9" ry="8" fill="#FFFFFF"/>
+                <path d="M8 5.5 C7 3, 10 2, 12 3.5 C14 2, 17 3, 16 5.5 Z" fill="#FFFFFF" stroke="#5A4B40" stroke-width="1.2"/>
+                <circle cx="9" cy="11" r="1.4" fill="#2A1F1A"/>
+                <circle cx="15" cy="11" r="1.4" fill="#2A1F1A"/>
+                <ellipse cx="12" cy="13.2" rx="1.2" ry="0.8" fill="#2A1F1A"/>
+                <ellipse cx="7" cy="13.5" rx="1.6" ry="0.9" fill="#F7A7A0"/>
+                <ellipse cx="17" cy="13.5" rx="1.6" ry="0.9" fill="#F7A7A0"/>
+              </svg>
+              <span id="feed-badge-text">已投喂 0 次</span>
+            </span>
+          </div>
+          <div class="header-actions">
+            <button
+              type="button"
+              id="chef-mode-btn"
+              class="mode-pill"
+              aria-pressed="false"
+            >
+              <span class="mode-dot"></span>
+              <span id="chef-mode-label">逛菜单</span>
+            </button>
+            <button
+              type="button"
+              id="settings-btn"
+              class="sky-icon-btn"
+              title="标签管理与同步设置"
+              aria-label="标签管理与同步设置"
+            >
+              ⚙️
+            </button>
+          </div>
+        </div>
+
+        <!-- 灵动岛正下方：阿咩豹探头打招呼的小窝 -->
+        <div class="ameibao-island-nest">
+          <button
+            type="button"
+            id="island-ameibao-btn"
+            class="ameibao-peek-trigger"
+            title="点一点阿咩豹"
+          >
+            <div id="header-ameibao" class="header-ameibao"></div>
+          </button>
+          <div class="speech-bubble" id="header-speech">
+            <span id="header-speech-text">阿咩豹正在整理小围裙…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 冰海蓝向暖奶油色画纸的波浪过渡 -->
+      <svg class="sky-wave" viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          d="M0,18 C180,44 360,2 540,22 C720,42 900,6 1080,24 C1260,42 1350,18 1440,20 L1440,48 L0,48 Z"
+          fill="#FBF6EC"
+        />
+      </svg>
+    </header>
+
+    <!-- 主体双栏/移动单栏区域 -->
+    <main class="workspace-grid">
+      <!-- 左栏：菜谱搜索、多标签筛选、菜单列表 -->
+      <section id="catalog-pane" class="catalog-pane active-mobile-pane">
+        <!-- 搜索栏 + 今天吃啥 -->
+        <div class="search-toolbar">
+          <div class="search-input-box">
+            <span class="search-icon">🔍</span>
+            <input
+              id="search-input"
+              type="search"
+              placeholder="搜菜名、主料或调料…"
+              autocomplete="off"
+            />
+            <button
+              type="button"
+              id="clear-search-btn"
+              class="clear-search-btn hidden"
+              aria-label="清空搜索"
+            >
+              ✕
+            </button>
+          </div>
+          <button
+            type="button"
+            id="random-pick-btn"
+            class="btn btn-ice random-pick-btn"
+            title="让阿咩豹从当前菜单里随机抽一道"
+          >
+            🎲 今天吃啥
+          </button>
+        </div>
+
+        <!-- 多标签筛选区 -->
+        <div class="filter-section">
+          <div class="filter-chips-scroll" id="tag-filter-list"></div>
+          <div class="filter-meta-row" id="filter-meta-row">
+            <div class="filter-left-meta">
+              <span id="recipe-count-label" class="muted-text">共 0 道菜</span>
+              <button
+                type="button"
+                id="tag-logic-btn"
+                class="mini-pill-btn hidden"
+                title="切换多标签组合方式"
+              >
+                同时包含所选标签
+              </button>
+              <button
+                type="button"
+                id="clear-filters-btn"
+                class="mini-link-btn hidden"
+              >
+                重置筛选
+              </button>
+            </div>
+            <div class="filter-right-meta">
+              <button
+                type="button"
+                id="view-toggle-btn"
+                class="mini-pill-btn"
+                title="切换卡片或列表视图"
+              >
+                卡片视图
+              </button>
+              <button
+                type="button"
+                id="add-recipe-inline-btn"
+                class="btn btn-warm btn-sm chef-only hidden"
+              >
+                + 记一道新菜
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 菜谱网格 / 空状态 -->
+        <div id="recipe-list-container" class="recipe-grid"></div>
+      </section>
+
+      <!-- 右栏（桌面常驻 / 手机底部第2个Tab）：想吃清单 & 备料汇总 -->
+      <aside id="wishlist-pane" class="wishlist-pane">
+        <div class="wishlist-panel-card">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">💛 想吃清单 & 备料本</h2>
+              <p class="panel-sub">提前点好想吃的菜，材料自动合并方便买菜备料</p>
+            </div>
+            <span id="wishlist-count-pill" class="count-pill">0 道</span>
+          </div>
+
+          <!-- 待做菜品 -->
+          <div class="wishlist-section">
+            <h3 class="subsection-title">已点的菜</h3>
+            <div id="wishlist-dishes" class="wishlist-dishes"></div>
+          </div>
+
+          <!-- 自动合并后的主料 & 调料清单 -->
+          <div class="wishlist-section">
+            <div class="subsection-header">
+              <h3 class="subsection-title">🧺 备料采买汇总</h3>
+              <button
+                type="button"
+                id="clear-checked-pantry-btn"
+                class="mini-link-btn hidden"
+              >
+                清空已备好
+              </button>
+            </div>
+            <div id="pantry-merged-list" class="pantry-merged-list"></div>
+
+            <!-- 临时加买一项 -->
+            <form id="custom-item-form" class="custom-item-form">
+              <input
+                id="custom-item-input"
+                type="text"
+                maxlength="60"
+                placeholder="顺便还要买点啥（如：一盒牛奶、香菜）"
+              />
+              <button type="submit" class="btn btn-ice btn-sm">加上</button>
+            </form>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 主厨模式手机端悬浮记菜按钮 -->
+    <button
+      type="button"
+      id="chef-fab-btn"
+      class="chef-fab chef-only hidden"
+      aria-label="记一道新菜"
+    >
+      <span>＋</span>
+      <span class="fab-label">记新菜</span>
+    </button>
+
+    <!-- 手机端底部导航栏（含 iPhone Home Indicator 安全区适配） -->
+    <nav class="mobile-bottom-nav" aria-label="主导航">
+      <button type="button" class="bottom-nav-item active" data-tab="catalog">
+        <span class="nav-icon">📖</span>
+        <span class="nav-text">逛菜单</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="wishlist">
+        <span class="nav-icon">💛</span>
+        <span class="nav-text">想吃清单</span>
+        <span id="mobile-wishlist-badge" class="nav-badge hidden">0</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="settings">
+        <span class="nav-icon nav-icon-svg" aria-hidden="true">
+          <svg width="22" height="20" viewBox="0 0 24 22" fill="none">
+            <path d="M6.5 6.5 C5 4, 8 2, 12 3.5 C16 2, 19 4, 17.5 6.5 Z" fill="#FFFFFF" stroke="#5A4B40" stroke-width="1.4"/>
+            <rect x="7" y="5.5" width="10" height="2.4" rx="1" fill="#6BA5D4" stroke="#5A4B40" stroke-width="1.2"/>
+            <ellipse cx="12" cy="13.5" rx="8.8" ry="7" fill="#FFFFFF" stroke="#5A4B40" stroke-width="1.5"/>
+            <circle cx="9" cy="12.5" r="1.3" fill="#2A1F1A"/>
+            <circle cx="15" cy="12.5" r="1.3" fill="#2A1F1A"/>
+            <ellipse cx="12" cy="14.5" rx="1.1" ry="0.7" fill="#2A1F1A"/>
+            <ellipse cx="6.8" cy="14.8" rx="1.4" ry="0.8" fill="#F7A7A0"/>
+            <ellipse cx="17.2" cy="14.8" rx="1.4" ry="0.8" fill="#F7A7A0"/>
+          </svg>
+        </span>
+        <span class="nav-text">小厨房</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- 菜谱详情弹窗 -->
+  <div id="recipe-detail-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-sheet detail-sheet">
+      <button type="button" class="modal-close-btn" data-close-modal="recipe-detail-modal" aria-label="关闭">
+        ✕
+      </button>
+      <div id="recipe-detail-content"></div>
+    </div>
+  </div>
+
+  <!-- 记菜 / 编辑菜谱弹窗 -->
+  <div id="recipe-editor-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-sheet editor-sheet">
+      <div class="modal-header-bar">
+        <h2 id="editor-modal-title">🍳 记一道拿手菜</h2>
+        <button type="button" class="modal-close-btn static-close" data-close-modal="recipe-editor-modal" aria-label="关闭">
+          ✕
+        </button>
+      </div>
+
+      <form id="recipe-editor-form" class="editor-form">
+        <!-- 成品图上传与压缩预览 -->
+        <div class="photo-upload-card">
+          <input
+            id="recipe-photo-input"
+            type="file"
+            accept="image/*"
+            class="sr-only"
+          />
+          <div id="photo-preview-area" class="photo-preview-area">
+            <div class="photo-placeholder-inner">
+              <span class="photo-icon">📷</span>
+              <span>点击从相册选成品图（自动压缩，不怕占空间）</span>
+            </div>
+          </div>
+          <div class="photo-actions-row">
+            <label for="recipe-photo-input" class="btn btn-ice btn-sm">选择成品照</label>
+            <span id="photo-size-info" class="muted-text"></span>
+            <button type="button" id="remove-photo-btn" class="mini-link-btn danger hidden">
+              移除照片
+            </button>
+          </div>
+        </div>
+
+        <!-- 菜名与待补全开关 -->
+        <div class="field-group">
+          <label class="field-label" for="editor-title">菜名 *</label>
+          <input
+            id="editor-title"
+            type="text"
+            maxlength="60"
+            placeholder="比如：匈牙利炖牛肉 Goulash"
+            required
+          />
+          <label class="checkbox-inline">
+            <input id="editor-draft-checkbox" type="checkbox" />
+            <span>先标记为“待补全”（先存菜名/照片，有空再补用料做法）</span>
+          </label>
+        </div>
+
+        <!-- 多标签分类 -->
+        <div class="field-group">
+          <label class="field-label">分类标签（可多选）</label>
+          <div id="editor-tags-picker" class="editor-tags-picker"></div>
+          <div class="inline-add-tag">
+            <input
+              id="editor-new-tag-input"
+              type="text"
+              maxlength="20"
+              placeholder="临时加个新标签，如：下酒菜、冬季菜"
+            />
+            <button type="button" id="editor-add-tag-btn" class="btn btn-ice btn-sm">
+              添加标签
+            </button>
+          </div>
+        </div>
+
+        <!-- 主料 -->
+        <div class="field-group ingredient-editor-box">
+          <div class="field-label-row">
+            <label class="field-label">🥩 主料</label>
+            <button type="button" class="mini-pill-btn" data-toggle-batch="main">
+              ⚡ 快速批量输入
+            </button>
+          </div>
+          <div id="batch-main-box" class="batch-paste-box hidden">
+            <textarea
+              id="batch-main-textarea"
+              rows="3"
+              placeholder="一行一条或用逗号/顿号隔开，支持语音输入后一键拆分，例如：&#10;牛腱子 600g，洋葱 2个，土豆 2个，胡萝卜 1根"
+            ></textarea>
+            <div class="batch-actions">
+              <button type="button" class="btn btn-ice btn-sm" data-apply-batch="main">
+                智能拆分成主料行
+              </button>
+            </div>
+          </div>
+          <div id="editor-main-list" class="dynamic-rows-list"></div>
+          <button type="button" class="btn btn-ghost btn-sm" data-add-ing="main">
+            + 加一条主料
+          </button>
+        </div>
+
+        <!-- 调料 -->
+        <div class="field-group ingredient-editor-box">
+          <div class="field-label-row">
+            <label class="field-label">🧂 调料与香料</label>
+            <button type="button" class="mini-pill-btn" data-toggle-batch="seasoning">
+              ⚡ 快速批量输入
+            </button>
+          </div>
+          <div id="batch-seasoning-box" class="batch-paste-box hidden">
+            <textarea
+              id="batch-seasoning-textarea"
+              rows="3"
+              placeholder="比如：红甜椒粉 2大勺，番茄膏 1大勺，大蒜 4瓣，盐 适量"
+            ></textarea>
+            <div class="batch-actions">
+              <button type="button" class="btn btn-ice btn-sm" data-apply-batch="seasoning">
+                智能拆分成调料行
+              </button>
+            </div>
+          </div>
+          <div id="editor-seasoning-list" class="dynamic-rows-list"></div>
+          <button type="button" class="btn btn-ghost btn-sm" data-add-ing="seasoning">
+            + 加一条调料
+          </button>
+        </div>
+
+        <!-- 做法步骤 -->
+        <div class="field-group ingredient-editor-box">
+          <div class="field-label-row">
+            <label class="field-label">👩‍🍳 做法步骤</label>
+            <button type="button" class="mini-pill-btn" data-toggle-batch="steps">
+              ⚡ 批量粘贴步骤
+            </button>
+          </div>
+          <div id="batch-steps-box" class="batch-paste-box hidden">
+            <textarea
+              id="batch-steps-textarea"
+              rows="3"
+              placeholder="每行写一步，会自动去掉前面的数字序号～"
+            ></textarea>
+            <div class="batch-actions">
+              <button type="button" class="btn btn-ice btn-sm" data-apply-batch="steps">
+                拆分成步骤
+              </button>
+            </div>
+          </div>
+          <div id="editor-steps-list" class="dynamic-rows-list"></div>
+          <button type="button" id="add-step-row-btn" class="btn btn-ghost btn-sm">
+            + 加一步做法
+          </button>
+        </div>
+
+        <!-- 主厨小贴士 -->
+        <div class="field-group">
+          <label class="field-label" for="editor-tips">💡 主厨小贴士 / 口味备忘</label>
+          <textarea
+            id="editor-tips"
+            rows="2"
+            placeholder="比如：爱人喜欢炖软烂一点；红甜椒粉要离火拌避免苦…"
+          ></textarea>
+        </div>
+
+        <div class="editor-footer-actions">
+          <button
+            type="button"
+            id="save-and-next-btn"
+            class="btn btn-ice"
+          >
+            保存并继续记下一道
+          </button>
+          <button
+            type="submit"
+            id="save-recipe-btn"
+            class="btn btn-primary"
+          >
+            保存菜谱
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 设置与标签管理弹窗 -->
+  <div id="settings-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-sheet settings-sheet">
+      <div class="modal-header-bar">
+        <h2>🍳 阿咩豹的小厨房设置</h2>
+        <button type="button" class="modal-close-btn static-close" data-close-modal="settings-modal" aria-label="关闭">
+          ✕
+        </button>
+      </div>
+
+      <div class="settings-body">
+        <div class="settings-card">
+          <div class="settings-row">
+            <div>
+              <strong>👨‍🍳 主厨编辑模式</strong>
+              <p class="muted-text">开启后可以新增、修改或删除菜谱；平时关掉更防误触</p>
+            </div>
+            <button type="button" id="settings-chef-toggle" class="btn btn-ice btn-sm">切换</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-row">
+            <div>
+              <strong>🏷️ 分类标签管理</strong>
+              <p class="muted-text">添加、重命名或清理不需要的分类标签</p>
+            </div>
+          </div>
+          <div id="tag-manager-list" class="tag-manager-list"></div>
+          <form id="tag-manager-add-form" class="tag-add-form">
+            <input id="tag-emoji-input" type="text" maxlength="4" value="🍽️" class="emoji-input" aria-label="图标" />
+            <input id="tag-name-input" type="text" maxlength="20" placeholder="新标签名称…" required />
+            <button type="submit" class="btn btn-primary btn-sm">新增</button>
+          </form>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-row">
+            <div>
+              <strong>☁️ 同步与备份</strong>
+              <p id="sync-mode-label" class="muted-text">正在检查同步方式…</p>
+            </div>
+          </div>
+          <div class="settings-btn-grid">
+            <button type="button" id="force-refresh-btn" class="btn btn-ice btn-sm">立即从云端刷新</button>
+            <button type="button" id="export-backup-btn" class="btn btn-ghost btn-sm">导出完整 JSON 备份</button>
+            <button type="button" id="seed-starters-btn" class="btn btn-ghost btn-sm">放入 3 道示例菜</button>
+            <button type="button" id="logout-btn" class="btn btn-danger-soft btn-sm">锁定并退出</button>
+          </div>
+        </div>
+
+        <div id="recent-cooked-card" class="settings-card hidden">
+          <strong>🍲 最近投喂记录</strong>
+          <ul id="recent-cooked-list" class="recent-cooked-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 阿咩豹翻肚皮/吃饱庆祝浮层 -->
+  <div id="ameibao-celebration" class="celebration-overlay hidden" role="status" aria-live="polite">
+    <div class="celebration-card">
+      <div id="celebration-ameibao" class="celebration-ameibao"></div>
+      <p id="celebration-title" class="celebration-title">点菜成功！</p>
+      <p id="celebration-sub" class="celebration-sub">阿咩豹开心得翻肚皮打滚啦～</p>
+    </div>
+  </div>
+
+  <!-- 轻提示 Toast -->
+  <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
